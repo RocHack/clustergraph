@@ -168,31 +168,22 @@ label {
 	top: 50%;
 	left: 50%;
 	width: 28em;
-	margin-left: -15.5em;
-	margin-top: -14em;
+	margin-left: -15em;
+	margin-top: -9em;
 	border: 3px solid #999;
-	padding: 2em 1.5em 1.5em;
+	padding: 1em;
 	background-color: rgba(255, 255, 255, 0.8);
+	text-align: right;
 }
 
 #about h3 {
 	margin: 0;
-	float: left;
 }
 
-#source_link {
-	display: block;
-	clear: both;
-	margin: 0 0 1.5em;
-}
-
-#about #sig {
-	float: right;
-	margin: 0;
-}
-
-#about #tagline {
-	font-style: oblique;
+#about p a {
+	display: inline-block;
+	width: 50%;
+	text-align: left;
 }
 
 #about button {
