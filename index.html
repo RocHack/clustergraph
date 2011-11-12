@@ -9,8 +9,19 @@
 		<link type="text/css" rel="stylesheet" href="clustergraph.css">
 	</head>
 	<body>
+		<div id="fb-root"></div>
+		<script>(function(d, s, id) {
+var js, fjs = d.getElementsByTagName(s)[0];
+if (d.getElementById(id)) {return;}
+js = d.createElement(s); js.id = id;
+js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+fjs.parentNode.insertBefore(js, fjs);
+		}(document, 'script', 'facebook-jssdk'));</script>
 		<div id="left">
 			<h1>Rochester Cluster Navigator</h1>
+			<p>Explore the curriculum through the interconnection of courses and clusters.<br>
+			Click a course or cluster to make it the focus node of the graph.</p>
+			<div class="fb-like" data-href="http://csug.rochester.edu/u/clehner/clustergraph/" data-send="false" data-width="450" data-show-faces="false" data-font="lucida grande"></div>
 			<p><label>Degrees: <span id="degrees_value"></span></label>
 			<input id="degrees_slider" type="range" min="0" step="1" max="8" value="1"></p>
 			<label>Legend:</label>
