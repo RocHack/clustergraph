@@ -92,8 +92,11 @@ label {
 }
 
 #about_link {
-	font-size: small;
 	background: rgba(255, 255, 255, 0.7);
+}
+
+.fb-like {
+	height: 1.5em;
 }
 
 /* Right */
@@ -134,6 +137,7 @@ label {
 	border: 2px solid #aaa;
 	max-height: 20em;
 	overflow: auto;
+	overflow-x: hidden;
 	text-align: left;
 }
 #search_results:empty {
