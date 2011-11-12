@@ -1,0 +1,198 @@
+/* Chart */
+
+line.link {
+	fill: none;
+	stroke: #9ecae1;
+	stroke-width: 1.5px;
+	pointer-events: none;
+}
+
+.node circle {
+	cursor: pointer;
+	stroke: #3182bd;
+	stroke-width: 1.5px;
+}
+
+.nodetext {
+	pointer-events: none;
+	font: 12px sans-serif;
+	opacity: 0.4;
+}
+
+.node.hover text {
+	opacity: 1;
+}
+
+.node .label {
+	fill: white;
+	opacity: 0.8;
+	pointer-events: none;
+}
+
+.node.course circle {
+	fill: #fd8d3c;
+}
+.node.cluster circle {
+	fill: #c6dbef;
+}
+.node.collapsed circle {
+	stroke: #c6dbef;
+}
+.node.focus circle {
+	stroke: #112244;
+	fill: #fffff6;
+	cursor: inherit;
+}
+
+/* Regular stuff */
+
+body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+	font-family: sans-serif;
+}
+
+#chart {
+	margin: 0;
+}
+
+/* Left */
+
+h1 {
+	margin: .25em 0 .5em;
+}
+
+label {
+	display: block;
+	margin-bottom: .5em;
+}
+
+#left {
+	position: absolute;
+	margin: 1em;
+	left: 0;
+	top: 0;
+}
+
+#legend {
+	border: 2px solid #aaa;
+	width: 130px;
+	height: 130px;
+	background: rgba(255, 255, 255, 0.8);
+}
+
+#legend text {
+	font-size: 12px;
+	opacity: 0.9;
+}
+
+#about_link {
+	font-size: small;
+	background: rgba(255, 255, 255, 0.7);
+}
+
+/* Right */
+
+#right {
+	position: absolute;
+	padding: 1em;
+	right: 0;
+	top: 0;
+	width: 13em;
+	background: rgba(255, 255, 255, 0.7);
+	text-align: right;
+}
+
+#degrees_slider {
+	width: 200px;
+}
+
+#node_type {
+	text-align: right;
+}
+
+#node_info {
+	text-align: left;
+}
+
+#search {
+	width: 18em;
+}
+
+#search_results {
+	list-style-type: none;
+	position: absolute;
+	right: 1em;
+	max-width: 12em;
+	margin: 0;
+	padding: 0;
+	border: 2px solid #aaa;
+	max-height: 20em;
+	overflow: auto;
+	text-align: left;
+}
+#search_results:empty {
+	visibility: hidden;
+}
+#search_results li {
+	margin: 0;
+	padding: 0;
+}
+
+#search_results li a {
+	text-decoration: none;
+	color: black;
+	display: block;
+	padding: .25em;
+	background-color: rgba(255, 255, 255, 0.85);
+}
+#search_results li:not(:first-child) a {
+	border-top: 2px solid #aaa;
+}
+
+#search_results li.highlight a {
+	background-color: rgba(0, 0, 0, 0.85);
+	color: #eee;
+}
+
+/* About */
+
+#about {
+	display: none;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 28em;
+	margin-left: -15.5em;
+	margin-top: -14em;
+	border: 3px solid #999;
+	padding: 2em 1.5em 1.5em;
+	background-color: rgba(255, 255, 255, 0.8);
+}
+
+#about h3 {
+	margin: 0;
+	float: left;
+}
+
+#source_link {
+	display: block;
+	clear: both;
+	margin: 0 0 1.5em;
+}
+
+#about #sig {
+	float: right;
+	margin: 0;
+}
+
+#about #tagline {
+	font-style: oblique;
+}
+
+#about button {
+	display: block;
+	margin: 0 auto;
+	width: 4em;
+}
