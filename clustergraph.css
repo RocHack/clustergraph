@@ -59,6 +59,15 @@ p {
 
 #chart {
 	margin: 0;
+	position: absolute;
+	z-index: 1;
+	width: 100%;
+	height: 100%;
+}
+
+h1, :link, input, button, #legend, .fb-like, #right, #about {
+	position: relative;
+	z-index: 2;
 }
 
 /* Left */
@@ -139,6 +148,7 @@ label {
 	overflow: auto;
 	overflow-x: hidden;
 	text-align: left;
+	z-index: 3;
 }
 #search_results:empty {
 	visibility: hidden;
