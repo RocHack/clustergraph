@@ -4,6 +4,7 @@ var node,
     link,
 	courses,
 	clusters,
+	all,
 	focusNode,
 	degree;
 
@@ -15,6 +16,7 @@ var vis = d3.select("#chart").append("svg:svg");
 d3.json("courses-clusters.json", function(data) {
 	courses = data.courses;
 	clusters = data.clusters;
+	all = courses.concat(clusters);
 	onHashChange();
 	if (!focusNode) {
 		// Start with a random course or cluster
@@ -183,7 +185,6 @@ function traverse(focus, degree, alreadySeen) {
 }
 
 function showAll() {
-	var nodes = courses.concat(clusters);
 	var links = [];
 }
 
@@ -401,6 +402,18 @@ Function.prototype.debounce = function (threshold, execAsap) {
 	};
 };
 
+var indexed = false;
+function makeSearchIndex() {
+	if (indexed) return;
+	all.forEach(function (node) {
+		var title = " " + node.title.toUpperCase().replace('_', ' ');
+		// add cluster ids for clusters
+		if (node.courses) title += " " + node.id;
+		node.snippet = title;
+	});
+	indexed = true;
+}
+
 var windowFocused = true,
 	resultsFocused,
 	searchFocused;
@@ -410,53 +423,38 @@ var searchResults = d3.select("#search_results");
 var results = [];
 var activeResult; // highlighted result
 
-var search = function () {
+function search() {
+	makeSearchIndex();
+
 	var query = this.value
 		.replace(/^\s+|\s+$/g, '')
 		.replace(/\s+/g, ' ')
 		.toUpperCase();
 
 	// Get search results
-	results = query ? [].concat.call.apply([].concat,
-		[courses, clusters].map(function (nodes) {
-			return nodes.filter(function (node) {
-				var title = node.title.toUpperCase().replace('_', ' ');
-				return (title.indexOf(query) != -1);
-			});
-		})) : [];
+	results = query ? all.filter(function (node) {
+		return (node.snippet.indexOf(query) != -1);
+	}).map(fitness) : [];
 
 	// Rank search results
 	function fitness(node) {
 		// points if a word in the query is in the result
 		// more points if it is towards the beginning.
 		var p = 0;
-		var title = " " + node.title.toUpperCase();
 		query.split(" ").forEach(function (word) {
-			var i = title.indexOf(" " + word);
+			var i = node.snippet.split(" ").indexOf(word);
 			if (i != -1) {
-				p += 1 / (i + 1);
+				p += 1 / i;
 			} else {
-				i = title.indexOf(word);
+				i = node.snippet.indexOf(word);
 				if (i != -1) {
-					p += 1 / (i + 31);
+					p += 1 / i;
 				}
 			}
 		});
-		//console.log(title, p);
-		return p;
-		// 1 point if first word in title is found in query
-		// 1/2 point if second word is. etc.
-		/*var p = 0;
-		var q = " " + query;
-		var titleWords = node.title.toUpperCase().split(" ");
-		titleWords.forEach(function (word, i) {
-			if ((" " + word).indexOf(q) != -1) {
-				p += 1 / (i + 1);
-			}
-		});
-		console.log(node.title, p);
-		return p;
-		*/
+		console.log(node.snippet, p);
+		node.fitness = p;
+		return node;
 	}
 
 	// Update search results list
@@ -473,7 +471,7 @@ var search = function () {
 	result.exit().remove();
 
 	result.sort(function (a, b) {
-		return fitness(b) - fitness(a);
+		return b.fitness - a.fitness;
 	});
 }
 
