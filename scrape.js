@@ -65,13 +65,12 @@ var school = {
 	getDepartments: function (cb) {
 		get('http://rochester.edu/College/CCAS/clusters/cluster_directory7.html', function (html) {
 			var depts = [];
-			var re = /"(\/ur-cgi-bin\/CCAS\/symphony\?.*?")/g, m;
+			var re = /"(\/ur-cgi-bin\/CCAS\/symphony\?.*?)"/g, m;
 			while (m = re.exec(html)) {
-				var deptPath = m[1].replace(/&amp;/g, '&');
-				
-				// Fix incorrect CSC link.
-				deptPath = deptPath.replace('N1CSC', 'N4CSC');
-
+				var deptPath = m[1].replace(/&amp;/g, '&')
+					// fix broken links
+					.replace('N1CSC', 'N4CSC')
+					.replace(/department=(.*?)&query=&/g, 'query=$1&bydept=yes&')
 				depts.push(new Department(deptPath));
 			}
 			cb(depts);
@@ -125,9 +124,9 @@ function Cluster(clusterId, cb) {
 		var re = /dept=\r(.*?)&cn=(.*?)'>(.*?)<\/td>/g, m;
 		while (m = re.exec(html)) {
 			var course = {
-				dept: m[1],
-				cn: m[2],
-				title: m[3].replace('</a>', ''),
+				dept: m[1].trim(),
+				cn: m[2].trim(),
+				title: m[3].replace('</a>', '').trim(),
 			};
 			courses.push(course);
 		}
@@ -141,10 +140,10 @@ function Cluster(clusterId, cb) {
 		var cluster = {
 			id: clusterId,
 			courses: courses,
-			title: m[1],
-			dept: m[2],
-			division: m[3],
-			description: m[4]
+			title: m[1].trim(),
+			dept: m[2].trim(),
+			division: m[3].trim(),
+			description: m[4].trim()
 		};
 		cb(cluster);
 	});
