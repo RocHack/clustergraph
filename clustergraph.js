@@ -430,10 +430,13 @@ function search() {
 		.replace(/^\s+|\s+$/g, '')
 		.replace(/\s+/g, ' ')
 		.toUpperCase();
+	var queryWords = query.split(" ");
 
 	// Get search results
 	results = query ? all.filter(function (node) {
-		return (node.snippet.indexOf(query) != -1);
+		return queryWords.some(function (word) {
+			return (node.snippet.indexOf(word) != -1);
+		});
 	}).map(fitness) : [];
 
 	// Rank search results
@@ -441,7 +444,7 @@ function search() {
 		// points if a word in the query is in the result
 		// more points if it is towards the beginning.
 		var p = 0;
-		query.split(" ").forEach(function (word) {
+		queryWords.forEach(function (word) {
 			var i = node.snippet.split(" ").indexOf(word);
 			if (i != -1) {
 				p += 1 / i;
@@ -452,7 +455,7 @@ function search() {
 				}
 			}
 		});
-		console.log(node.snippet, p);
+		//console.log(node.snippet, p);
 		node.fitness = p;
 		return node;
 	}
