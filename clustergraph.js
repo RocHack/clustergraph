@@ -59,7 +59,8 @@ function isFocus(node) {
 
 function shortTitle(node) {
 	return node.clusters ?
-		node.dept + " " + node.cn :
+		"" :
+		//node.dept + " " + node.cn :
 		node.title;
 		//"";
 	return node.clusters ?
@@ -186,6 +187,7 @@ function traverse(focus, degree, alreadySeen) {
 
 function showAll() {
 	var links = [];
+	// todo
 }
 
 function resize(resume) {
@@ -212,7 +214,8 @@ function update() {
 		.nodes(nodes)
 		.links(links)
 		.distance(50)
-		.charge(-175)
+		.charge(-180)
+		.gravity(0.35)
 		.start();
 
 	// Update the links…
