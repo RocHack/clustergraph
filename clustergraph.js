@@ -36,9 +36,13 @@ var degSlider = d3.select("#degrees_slider")
 		sessionStorage.clusterexplorerdegree = degree;
 		update();
 	});
-degree = +sessionStorage.clusterexplorerdegree;
-if (isNaN(degree)) degree = +degSlider.attr("value");
-else degSlider.attr("value", degree);
+degree = sessionStorage.clusterexplorerdegree;
+if (degree == null) {
+	degree = +degSlider.attr("value");
+} else {
+	degree = +degree || 0;
+	degSlider.attr("value", degree);
+}
 deg.html(degree);
 
 function isCourse(node) {
@@ -193,8 +197,8 @@ function showAll() {
 function resize(resume) {
 	var svg = vis.node();
 	force.size([
-		svg.offsetWidth,
-		svg.offsetHeight
+		window.innerWidth, //svg.offsetWidth,
+		window.innerHeight, //svg.offsetHeight
 	]);
 	if (resume !== false)
 		force.resume();
@@ -517,12 +521,8 @@ function highlightResult(li) {
 	}
 }
 
-var supportsInputSearch = (function (i) {
-	i.setAttribute("type", "search");
-	return (i.type == "search");
-})(document.createElement("input"));
-
 var searchField = d3.select("#search");
+var supportsInputSearch = "onsearch" in document.createElement("input");
 if (supportsInputSearch) {
 	searchField.on("search", search);
 } else {
