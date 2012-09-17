@@ -62,24 +62,27 @@ function isFocus(node) {
 }
 
 function shortTitle(node) {
-	return node.clusters ?
-		"" :
-		//node.dept + " " + node.cn :
-		node.title;
-		//"";
-	return node.clusters ?
-		"" : node.title;
+	return node.clusters ? "" : node.title;
 }
 
 function longTitle(node) {
 	// Cluster names are fine
 	if (node.courses) return node.title;
-	// Simplify course names
-	var t = node.title.split(":");
-	return t[0].replace("_", " ") + ":"
-		+ t[1].toLowerCase().replace( /(^|\s)([a-z])/g , function (m, p1, p2) {
-			return p1 + p2.toUpperCase();
-		});
+
+	// Cache
+	if (!node._longtitle) {
+		var listings = node.listings.map(function (listing) {
+			return listing.dept + " " + listing.cn;
+		}).join("/");
+
+		var title = node.title.toLowerCase().replace(/(^|\s)([a-z])/g,
+			function (m, p1, p2) {
+				return p1 + p2.toUpperCase();
+			});
+
+		node._longtitle = listings + ": " + title;
+	}
+	return node._longtitle;
 }
 
 function radius(node) {
@@ -300,12 +303,12 @@ function updateNodeInfo() {
 	if (d.clusters) {
 		// Course
 		url = "https://cdcs.ur.rochester.edu/Query.aspx?id=DARS&dept=" +
-			d.dept + "&cn=" + d.cn;
+			d.listings[0].dept + "&cn=" + d.listings[0].cn;
 		info = type = "";
 	} else {
 		// Cluster
-		url = "http://www.rochester.edu/ur-cgi-bin/CCAS/symphony?" +
-			"TEMPLATE=clusters3.pkg&expired=no&query=" + d.id;
+		url = "https://secure1.rochester.edu/registrar/CSE/searchResults.php#" +
+			d.id;
 		type = d.dept + " (" + d.division + ")"
 		info = d.description;
 	}
@@ -321,7 +324,7 @@ function updateNodeInfo() {
 // Encode focus node (state) in location hash.
 function hashNode(node) {
 	return (node.clusters ?
-		"#course:" + node.dept + node.cn :
+		"#course:" + node.listings[0].dept + node.listings[0].cn :
 		"#cluster:" + node.id
 	).toLowerCase();
 }
@@ -413,7 +416,7 @@ var indexed = false;
 function makeSearchIndex() {
 	if (indexed) return;
 	all.forEach(function (node) {
-		var title = " " + node.title.toUpperCase().replace('_', ' ');
+		var title = " " + longTitle(node).toUpperCase();
 		// add cluster ids for clusters
 		if (node.courses) title += " " + node.id;
 		node.snippet = title;

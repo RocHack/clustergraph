@@ -1,4 +1,5 @@
 var http = require('http');
+var https = require('https');
 var url = require('url');
 var fs = require('fs');
 
@@ -10,194 +11,128 @@ function uniq(arr) {
 }
 
 // scraping
+function get(u, postData, cb) {
+	//return fs.readFile("asdf.html", function (er, html) {
+		//cb("" + html);
+	//});
 
-function get(u, end_sentinel, cb) {
 	if (arguments.length == 2) {
 		cb = arguments[1];
-		end_sentinel = null;
+		postData = null;
 	}
 	var urlParts = url.parse(u);
+	var secure = urlParts.protocol == "https:";
 	var options = {
+		method: postData ? "POST" : "GET",
 		host: urlParts.hostname,
-		port: urlParts.port || 80,
-		path: urlParts.pathname + (urlParts.search || '')
+		port: urlParts.port || (secure ? 443 : 80),
+		path: urlParts.pathname + (urlParts.search || ''),
+		headers: postData && {
+			"Content-Length": postData.length,
+			"Content-Type": "application/x-www-form-urlencoded",
+			"Cookie": "PHPSESSID=vo0s3kid83cj7un6jdtjrc0ho6"
+			// todo: fetch cookie separately
+		}
 	};
-	var req = http.get(options, function (res) {
+	var req = (secure ? https : http).request(options, function (res) {
 		var data = '';
+		res.setEncoding('utf8');
 		res.on('data', function (chunk) {
-			if (end_sentinel && ((data + chunk).indexOf(end_sentinel) != -1)) {
-				res.removeAllListeners('data');
-				res.removeAllListeners('end');
-				cb(data);
-			} else {
-				data += chunk;
-			}
+			data += chunk;
 		});
 		res.on('end', function () {
 			cb(data);
 		});
 	});
-}
-
-/* posting to couchdb */
-
-function putDoc(doc, dbUrl, cb) {
-	var urlParts = url.parse(dbUrl);
-	var options = {
-		host: urlParts.hostname,
-		port: urlParts.port || 80,
-		path: urlParts.pathname + "/" + doc._id,
-		method: String(doc._id) ? "PUT" : "POST"
-	};
-	var req = http.request(options, function (res) {
-		res.setEncoding('utf8');
-		cb(res.statusCode);
-	});
-	req.on('error', function (e) {
-		cb(e);
-	});
-	req.write(JSON.stringify(doc));
+	if (postData) {
+		req.write(postData);
+	}
 	req.end();
 }
 
-/* Scraping stuff */
-var school = {
-	getDepartments: function (cb) {
-		get('http://rochester.edu/College/CCAS/clusters/cluster_directory7.html', function (html) {
-			var depts = [];
-			var re = /"(\/ur-cgi-bin\/CCAS\/symphony\?.*?)"/g, m;
-			while (m = re.exec(html)) {
-				var deptPath = m[1].replace(/&amp;/g, '&')
-					// fix broken links
-					.replace('N1CSC', 'N4CSC')
-					.replace(/department=(.*?)&query=&/g, 'query=$1&bydept=yes&')
-				depts.push(new Department(deptPath));
-			}
-			cb(depts);
-		});
-	},
-	getClusterIds: function (cb) {
-		var waiting = 0;
-		var allClusterIds = [];
-		school.getDepartments(function (departments) {
-			console.log('Got departments: ' + departments.length);
-			//departments = departments.slice(0, 3);
-			departments.forEach(function (dept, i) {
-				//console.log('Getting cluster ids for dept ' + i);
-				waiting++;
-				dept.getClusterIds(function (clusterIds) {
-					waiting--;
-					var progress = ((1 - waiting / departments.length) * 100).toFixed(1);
-					console.log('Getting cluster ids: ' + progress + "%");
-					allClusterIds.push.apply(allClusterIds, clusterIds);
-					if (waiting == 0) {
-						cb(uniq(allClusterIds));
-					}
-				});
-			});
-		});
-	}
-};
+var clusterRe = /(.*?) \((.*?)\)<\/legend><p.*?>(.*?)<\/p>.*?Academic Division:<\/b>(.*?)<.*?Academic Department:<\/b>(.*?)</,
+	courseRe = /<td>.*?(Query\.aspx.*?)<td>(.*?)<\/td>/g,
+	listingsRe = /Query\.aspx\?id=DARS&dept=(.*?)&cn=(.*?)'/g;
 
-function Department(path) {
-	this.url = 'http://rochester.edu' + path;
+function sanitizeString(str) {
+	return str.replace(/\s{3,}/g, ' ')
+		.replace(/&#039;/g, "'")
+		.replace(/&amp;/g, "&")
+		.trim();
 }
-Department.prototype = {
-	getClusterIds: function (cb) {
-		get(this.url, '<h3>Related clusters:</h3>', function (html) {
-			var clusterIds = [];
-			var re = /<b>(.*?)<\/a> <font size=2>\((.*?) ?\)<\/font>/g, m;
-			while (m = re.exec(html)) {
-				clusterIds.push(m[2]);
-			}
-			// remove duplicates
-			cb(uniq(clusterIds));
-		});
-	}
-};
-
-function Cluster(clusterId, cb) {
-	this.courses = [];
-
-	get('http://www.rochester.edu/ur-cgi-bin/CCAS/symphony?TEMPLATE=clusters3.pkg&expired=no&query=' + clusterId, function (html) {
-		var courses = [];
-		var re = /dept=\r(.*?)&cn=(.*?)'>(.*?)<\/td>/g, m;
-		while (m = re.exec(html)) {
-			var course = {
-				dept: m[1].trim(),
-				cn: m[2].trim(),
-				title: m[3].replace('</a>', '').trim(),
-			};
-			courses.push(course);
-		}
-		re = /<h2>(.*?) <font[\s\S]*?Dept\/Division<\/b>\n<blockquote>(.*?)\/(.*?)<\/blockquote>\n<b>Description:<\/b>\n<blockquote>(.*?)\s*<\/blockquote>/;
-		m = re.exec(html);
-		if (!m) {
-			// probably an expired cluster
-			return cb(null);
-			//throw new Error("Unable to process cluster info for " + clusterId + ".");
-		}
-		var cluster = {
-			id: clusterId,
-			courses: courses,
-			title: m[1].trim(),
-			dept: m[2].trim(),
-			division: m[3].trim(),
-			description: m[4].trim()
-		};
-		cb(cluster);
-	});
-}
-
-var debug = 0;
 
 function getAllClusters(cb) {
-	if (debug) {
-		fs.readFile('clusters.json', function (err, data) {
-			if (err) throw err;
-			cb(JSON.parse(data));
-		});
-		return;
-	}
-	var waiting = 0;
-	var clusters = [];
-	school.getClusterIds(function (clusterIds) {
-		console.log('Got cluster ids:', clusterIds);
-		clusterIds.forEach(function (clusterId) {
-			//console.log('Getting cluster ' + clusterId);
-			waiting++;
-			var cluster = new Cluster(clusterId, function (cluster) {
-				if (cluster) clusters.push(cluster);
-				waiting--;
-				var progress = ((1 - waiting / clusterIds.length) * 100).toFixed(1);
-				console.log('Getting clusters: ' + progress + '%');
-				if (waiting == 0) {
-					cb(clusters);
+	console.log('Getting clusters. ');
+	get('https://secure1.rochester.edu/registrar/CSE/searchResults.php',
+		'ShowExpired=Hide%20Expired%20Clusters&Division=ALL&Department=ALL',
+		function (html) {
+			//fs.writeFile("asdf.html", html);
+
+		var clusters = [];
+		// Split page into sections, one for each cluster.
+		var sections = html.split("<legend id='clusterInformation'>");
+		console.log("Got " + sections.length + " clusters.");
+		for (var i = 1; i < sections.length; i++) {
+			var section = sections[i];
+
+			var m = clusterRe.exec(section);
+			if (!m) throw new Error("Cluster section did not match RE. " +
+				sections[i]);
+
+			var cluster = {
+				title: sanitizeString(m[1]),
+				id: m[2],
+				description: sanitizeString(m[3]),
+				division: m[4].trim(),
+				dept: m[5].trim(),
+				courses: []
+			};
+			clusters.push(cluster);
+
+			// Get all the courses in this cluster section
+			while (m = courseRe.exec(section)) {
+				var course = {
+					title: sanitizeString(m[2]),
+					listings: []
+				};
+				cluster.courses.push(course);
+
+				// get and add crosslistings
+				var n;
+				while (n = listingsRe.exec(m[1])) {
+					course.listings.push({
+						dept: n[1].trim(),
+						cn: n[2].trim()
+					});
 				}
-			});
+			}
+		}
+
+		clusters.sort(function (a, b) {
+			return b.id > a.id;
 		});
+		cb(clusters);
 	});
 }
-
-function saveClusters(clusters) {
-	var output = 'clusters.json';
-	fs.writeFile(output, JSON.stringify(clusters), function (err) {
-		if (err) throw err;
-		console.log('Clusters have been saved to ' + output + '.');
-	});
-}
-
-// getAllClusters(saveClusters);
 
 function extractCoursesFromClusters(cb) {
 	var courses = [];
 	var courseIndexById = {};
 	var numCourses = 0;
+
+	// uniqify courses, including crosslists
 	function courseToIndex(course) {
-		var id = course.dept + ' ' + course.cn;
-		var i = courseIndexById[id];
+		var ids = course.listings.map(function (listing) {
+			return listing.dept + ' ' + listing.cn;
+		});
+
+		// get first index that has already been seen
+		var i = ids.map(function (id) {
+			return courseIndexById[id];
+		}).filter(Boolean)[0];
+
 		if (i == null) {
-			i = courseIndexById[id] = numCourses++;
+			i = courseIndexById[ids[0]] = numCourses++;
 			courses[i] = course;
 			course.clusters = [];
 		}
@@ -224,33 +159,19 @@ function extractCoursesFromClusters(cb) {
 	});
 }
 
+
+var args = process.argv;
+if (!args[2]) {
+	process.stdout.write("Usage: node scrape.js [output.json]\n");
+	return;
+}
+
+var max = args[3] || 0;
+var output = args[2];
+//var output = 'courses-clusters.json';
 extractCoursesFromClusters(function (data) {
-	var output = 'courses-clusters.json';
 	fs.writeFile(output, JSON.stringify(data), function (err) {
 		if (err) throw err;
 		console.log('Courses and clusters have been saved to ' + output + '.');
 	});
 });
-
-// save a cluster as a doc to the db
-function saveCluster(cluster) {
-	//cluster._id = cluster.id;
-	//putDoc(cluster, 'http://localhost:5984/clusterland', function (result) {
-}
-
-/*
-var args = process.argv;
-if (!args[2]) {
-	process.stdout.write("Usage: node scrape.js output.json [max_departments]\n");
-} else {
-	var max = args[3] || 0;
-	var output = args[2];
-	getCourseAndClusterDocs(max, function (data) {
-		console.log("Saving data...");
-		fs.writeFile(output, JSON.stringify(data), function (err) {
-			if (err) throw err;
-			console.log('Docs have been saved to ' + output + '.');
-		});
-	});
-}
-*/
