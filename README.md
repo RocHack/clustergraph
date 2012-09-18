@@ -3,7 +3,7 @@ Rochester Cluster Navigator
 
 The [University of Rochester curriculum](http://www.rochester.edu/aboutus/curricula.html) has clusters of courses. Many courses fall into more than one cluster. This tool presents the courses and clusters as nodes in a graph, and allows you to explore the graph to navigate the curriculum.
 
-[![Screenshot of Political Science courses and clusters](urhackerclub.github.com/clustergraph/screenshot.png)](http://urhackerclub.github.com/clustergraph/#course:psc248)
+[![Screenshot of Political Science courses and clusters](http://urhackerclub.github.com/clustergraph/screenshot.png)](http://urhackerclub.github.com/clustergraph/#course:psc248)
 
 Updating the curriculum data
 ----------------------------
