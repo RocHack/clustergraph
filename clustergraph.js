@@ -435,14 +435,11 @@ var activeResult; // highlighted result
 function search() {
 	var f = getFuse();
 
-	var query = this.value
-		.replace(/^\s+|\s+$/g, '')
-		.replace(/\s+/g, ' ')
-		.toUpperCase();
-	var queryWords = query.split(" ");
-
 	// Get search results
+	var query = this.value;
 	results = f.search(query).filter(function (node) {
+		// remove nodes without title
+		// todo: remove them in scrape.js instead
 		return node.title;
 	});
 
