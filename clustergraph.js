@@ -91,7 +91,7 @@ function radius(node) {
 
 var allLinks = {};
 function getLink(course, cluster) {
-	var id = course.id + "|" + cluster.id;
+	var id = nodeId(course) + "|" + cluster.id;
 	//console.log(id in allLinks);
 	return allLinks[id] || (allLinks[id] = {
 		id: id,
@@ -102,7 +102,7 @@ function getLink(course, cluster) {
 
 var nodeIds = 1;
 function nodeId(node) {
-	return node.id || (node.id = nodeIds++);
+	return node._id || (node._id = nodeIds++);
 }
 
 // remove duplicates from an array
@@ -412,16 +412,14 @@ Function.prototype.debounce = function (threshold, execAsap) {
 	};
 };
 
-var indexed = false;
-function makeSearchIndex() {
-	if (indexed) return;
-	all.forEach(function (node) {
-		var title = " " + longTitle(node).toUpperCase();
-		// add cluster ids for clusters
-		if (node.courses) title += " " + node.id;
-		node.snippet = title;
+var f;
+function getFuse() {
+	if (f) return f;
+	all.forEach(longTitle);
+	f = new Fuse(all, {
+		keys: ["id", "title", "_longtitle"]
 	});
-	indexed = true;
+	return f;
 }
 
 var windowFocused = true,
@@ -434,7 +432,7 @@ var results = [];
 var activeResult; // highlighted result
 
 function search() {
-	makeSearchIndex();
+	var f = getFuse();
 
 	var query = this.value
 		.replace(/^\s+|\s+$/g, '')
@@ -443,32 +441,9 @@ function search() {
 	var queryWords = query.split(" ");
 
 	// Get search results
-	results = query ? all.filter(function (node) {
-		return queryWords.some(function (word) {
-			return (node.snippet.indexOf(word) != -1);
-		});
-	}).map(fitness) : [];
-
-	// Rank search results
-	function fitness(node) {
-		// points if a word in the query is in the result
-		// more points if it is towards the beginning.
-		var p = 0;
-		queryWords.forEach(function (word) {
-			var i = node.snippet.split(" ").indexOf(word);
-			if (i != -1) {
-				p += 1 / i;
-			} else {
-				i = node.snippet.indexOf(word);
-				if (i != -1) {
-					p += 1 / i;
-				}
-			}
-		});
-		//console.log(node.snippet, p);
-		node.fitness = p;
-		return node;
-	}
+	results = f.search(query).filter(function (node) {
+		return node.title;
+	});
 
 	// Update search results list
 	var result = searchResults.selectAll("li")
@@ -482,10 +457,7 @@ function search() {
 			.text(longTitle)
 
 	result.exit().remove();
-
-	result.sort(function (a, b) {
-		return b.fitness - a.fitness;
-	});
+	result.order();
 }
 
 var prevMouse = {};
