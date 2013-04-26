@@ -9,7 +9,7 @@ var node,
 	degree;
 
 var force = d3.layout.force()
-    .on("tick", tick)
+    .on("tick", tick);
 
 var vis = d3.select("#chart").append("svg:svg");
 
@@ -201,7 +201,7 @@ function resize(resume) {
 	var svg = vis.node();
 	force.size([
 		window.innerWidth, //svg.offsetWidth,
-		window.innerHeight, //svg.offsetHeight
+		window.innerHeight //svg.offsetHeight
 	]);
 	if (resume !== false)
 		force.resume();
@@ -266,7 +266,7 @@ function update() {
 		.attr("r", radius)
 		.on("click", click)
 		.on("mouseover", mouseOver)
-		.on("mouseout", mouseOut)
+		.on("mouseout", mouseOut);
 	newG.append("svg:text")
         .attr("class", "nodetext")
         .attr("dx", 9)
@@ -309,7 +309,7 @@ function updateNodeInfo() {
 		// Cluster
 		url = "https://secure1.rochester.edu/registrar/CSE/searchResults.php#" +
 			d.id;
-		type = d.dept + " (" + d.division + ")"
+		type = d.dept + " (" + d.division + ")";
 		info = d.description;
 	}
 	d3.select("#node_title a")
@@ -330,14 +330,15 @@ function hashNode(node) {
 }
 
 function nodeByHash(hash) {
-	if (hash.indexOf("#course:") == 0) {
-		for (var i = 0; i < courses.length; i++) {
+	var i;
+	if (hash.indexOf("#course:") === 0) {
+		for (i = 0; i < courses.length; i++) {
 			if (hash == hashNode(courses[i])) {
 				return courses[i];
 			}
 		}
-	} else if (hash.indexOf("#cluster:") == 0) {
-		for (var i = 0; i < clusters.length; i++) {
+	} else if (hash.indexOf("#cluster:") === 0) {
+		for (i = 0; i < clusters.length; i++) {
 			if (hash == hashNode(clusters[i])) {
 				return clusters[i];
 			}
@@ -454,7 +455,7 @@ function search() {
 		.on("mousemove", maybeHighlightResult)
 		.append("a")
 			.attr("href", hashNode)
-			.text(longTitle)
+			.text(longTitle);
 
 	result.exit().remove();
 	result.order();
@@ -481,7 +482,7 @@ function highlightResult(li) {
 
 	// Scroll the highlighted result into view
 	var container = li.parentNode;
-	var scroll = null;
+	var scroll;
 	var down = li.offsetTop + li.offsetHeight - container.clientHeight;
 	if (down > container.scrollTop) {
 		scroll = down;
@@ -491,7 +492,7 @@ function highlightResult(li) {
 			scroll = up;
 		}
 	}
-	if (scroll != null) {
+	if (!isNaN(scroll)) {
 		container.scrollTop = scroll;
 	}
 }
@@ -501,8 +502,8 @@ var supportsInputSearch = "onsearch" in document.createElement("input");
 if (supportsInputSearch) {
 	searchField.on("search", search);
 } else {
-	searchField.on("keyup", search.debounce())
-};
+	searchField.on("keyup", search.debounce());
+}
 searchField
 	.on("keydown", function () {
 		if (!results.length) return;
