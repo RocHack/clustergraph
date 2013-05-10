@@ -50,7 +50,7 @@ function get(u, postData, cb) {
 	req.end();
 }
 
-var clusterRe = /(.*?) \((.*?)\)<\/legend><p.*?>(.*?)<\/p>.*?Academic Division:<\/b>(.*?)<.*?Academic Department:<\/b>(.*?)</,
+var clusterRe = /(.*?) \((.+?)\)<\/legend><p.*?>(.*?)<\/p>.*?Academic Division:<\/b>(.*?)<.*?Academic Department:<\/b>(.*?)</,
 	courseRe = /<td>.*?(Query\.aspx.*?)<td>(.*?)<\/td>/g,
 	listingsRe = /Query\.aspx\?id=DARS&dept=(.*?)&cn=(.*?)'/g;
 
