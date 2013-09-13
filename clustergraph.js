@@ -11,7 +11,8 @@ var node,
 var force = d3.layout.force()
     .on("tick", tick);
 
-var vis = d3.select("#chart").append("svg:svg");
+var vis = d3.select("#chart").append("svg:svg")
+	.classed("vis", true);
 
 d3.json("courses-clusters.json", function(data) {
 	courses = data.courses;
