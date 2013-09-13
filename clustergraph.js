@@ -62,6 +62,16 @@ function isFocus(node) {
 	return node == focusNode;
 }
 
+function listingToString(listing) {
+	return listing.dept + " " + listing.cn;
+}
+
+// Capitalize course titles
+var capRegex = /(^|\s)(iv|iii|ii|[a-z])/g;
+function capResult(m, p1, p2) {
+	return p1 + p2.toUpperCase();
+}
+
 function shortTitle(node) {
 	return node.clusters ? "" : node.title;
 }
@@ -72,14 +82,8 @@ function longTitle(node) {
 
 	// Cache
 	if (!node._longtitle) {
-		var listings = node.listings.map(function (listing) {
-			return listing.dept + " " + listing.cn;
-		}).join("/");
-
-		var title = node.title.toLowerCase().replace(/(^|\s)([a-z])/g,
-			function (m, p1, p2) {
-				return p1 + p2.toUpperCase();
-			});
+		var listings = node.listings.map(listingToString).join("/");
+		var title = node.title.toLowerCase().replace(capRegex, capResult);
 
 		node._longtitle = listings + ": " + title;
 	}
