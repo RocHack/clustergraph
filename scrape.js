@@ -12,10 +12,6 @@ function uniq(arr) {
 
 // scraping
 function get(u, postData, cb) {
-	//return fs.readFile("asdf.html", function (er, html) {
-		//cb("" + html);
-	//});
-
 	if (arguments.length == 2) {
 		cb = arguments[1];
 		postData = null;
@@ -30,8 +26,6 @@ function get(u, postData, cb) {
 		headers: postData && {
 			"Content-Length": postData.length,
 			"Content-Type": "application/x-www-form-urlencoded",
-			"Cookie": "PHPSESSID=vo0s3kid83cj7un6jdtjrc0ho6"
-			// todo: fetch cookie separately
 		}
 	};
 	var req = (secure ? https : http).request(options, function (res) {
@@ -62,11 +56,10 @@ function sanitizeString(str) {
 }
 
 function getAllClusters(cb) {
-	console.log('Getting clusters. ');
+	console.log('Getting clusters.');
 	get('https://secure1.rochester.edu/registrar/CSE/searchResults.php',
-		'ShowExpired=Hide%20Expired%20Clusters&Division=ALL&Department=ALL',
+		'Division=ALL&Department=ALL&SearchString=&submit=Search',
 		function (html) {
-			//fs.writeFile("asdf.html", html);
 
 		var clusters = [];
 		// Split page into sections, one for each cluster.
@@ -95,6 +88,9 @@ function getAllClusters(cb) {
 					title: sanitizeString(m[2]),
 					listings: []
 				};
+				if (course.title.indexOf('<del>') == 0) {
+					continue;
+				}
 				cluster.courses.push(course);
 
 				// get and add crosslistings
