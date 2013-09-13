@@ -119,7 +119,7 @@ function parseCurriculum(html, cb) {
 	var sections = html.split("<legend id='clusterInformation'>");
 	console.log("Got " + sections.length + " clusters.");
 	for (var i = 1; i < sections.length; i++) {
-		clusters[i] = parseCluster(sections[i]);
+		clusters[i-1] = parseCluster(sections[i]);
 	}
 
 	clusters.sort(function (a, b) {
