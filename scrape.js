@@ -134,6 +134,7 @@ function extractCoursesFromClusters(cb) {
 		}
 		return i;
 	}
+
 	getAllClusters(function (clusters) {
 		var clustersNice = clusters.map(function (c, clusterI) {
 			c.courses.forEach(function (course) {
@@ -155,6 +156,9 @@ function extractCoursesFromClusters(cb) {
 	});
 }
 
+function stringifyByLine(arr) {
+	return arr.map(JSON.stringify).join(',\n');
+}
 
 var args = process.argv;
 if (!args[2]) {
@@ -166,7 +170,10 @@ var max = args[3] || 0;
 var output = args[2];
 //var output = 'courses-clusters.json';
 extractCoursesFromClusters(function (data) {
-	fs.writeFile(output, JSON.stringify(data), function (err) {
+	var niceJSON = [].concat(
+		'{"clusters":[', stringifyByLine(data.clusters), '],',
+		'"courses":[', stringifyByLine(data.courses), ']}').join('\n');
+	fs.writeFile(output, niceJSON, function (err) {
 		if (err) throw err;
 		console.log('Courses and clusters have been saved to ' + output + '.');
 	});
