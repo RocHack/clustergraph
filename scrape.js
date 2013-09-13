@@ -88,7 +88,9 @@ function getAllClusters(cb) {
 					title: sanitizeString(m[2]),
 					listings: []
 				};
-				if (course.title.indexOf('<del>') == 0) {
+				if (!course.title ||
+					course.title == "N/A" ||
+					course.title.indexOf("<del>") == 0) {
 					continue;
 				}
 				cluster.courses.push(course);
