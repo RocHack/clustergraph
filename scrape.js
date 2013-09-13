@@ -10,6 +10,10 @@ function uniq(arr) {
 	});
 }
 
+function isListingEmpty(listing) {
+	return !listing.cn && !listing.dept;
+}
+
 // scraping
 function get(u, postData, cb) {
 	if (arguments.length == 2) {
@@ -59,58 +63,70 @@ function getAllClusters(cb) {
 	console.log('Getting clusters.');
 	get('https://secure1.rochester.edu/registrar/CSE/searchResults.php',
 		'Division=ALL&Department=ALL&SearchString=&submit=Search',
-		function (html) {
+		function(html) {
+			if (!html) throw new Error("Failed to get curriculum data.");
+			parseCurriculum(html, cb);
+		}
+	);
+}
 
-		var clusters = [];
-		// Split page into sections, one for each cluster.
-		var sections = html.split("<legend id='clusterInformation'>");
-		console.log("Got " + sections.length + " clusters.");
-		for (var i = 1; i < sections.length; i++) {
-			var section = sections[i];
+function parseCluster(section) {
+	var m = clusterRe.exec(section);
+	if (!m) throw new Error("Cluster section did not match RE. " +
+		sections[i]);
 
-			var m = clusterRe.exec(section);
-			if (!m) throw new Error("Cluster section did not match RE. " +
-				sections[i]);
+	var cluster = {
+		title: sanitizeString(m[1]),
+		id: m[2],
+		description: sanitizeString(m[3]),
+		division: m[4].trim(),
+		dept: m[5].trim(),
+		courses: []
+	};
 
-			var cluster = {
-				title: sanitizeString(m[1]),
-				id: m[2],
-				description: sanitizeString(m[3]),
-				division: m[4].trim(),
-				dept: m[5].trim(),
-				courses: []
-			};
-			clusters.push(cluster);
-
-			// Get all the courses in this cluster section
-			while (m = courseRe.exec(section)) {
-				var course = {
-					title: sanitizeString(m[2]),
-					listings: []
-				};
-				if (!course.title ||
-					course.title == "N/A" ||
-					course.title.indexOf("<del>") == 0) {
-					continue;
-				}
-				cluster.courses.push(course);
-
-				// get and add crosslistings
-				var n;
-				while (n = listingsRe.exec(m[1])) {
-					course.listings.push({
-						dept: n[1].trim(),
-						cn: n[2].trim()
-					});
-				}
-			}
+	// Get all the courses in this cluster section
+	while (m = courseRe.exec(section)) {
+		var course = {
+			title: sanitizeString(m[2]),
+			listings: []
+		};
+		if (!course.title ||
+			course.title == "N/A" ||
+			course.title.indexOf("<del>") == 0) {
+				continue;
 		}
 
-		clusters.sort(function (a, b) {
-			return b.id > a.id;
-		});
-		cb(clusters);
+		// get and add crosslistings
+		var n;
+		while (n = listingsRe.exec(m[1])) {
+			course.listings.push({
+				dept: n[1].trim(),
+				cn: n[2].trim()
+			});
+		}
+		if (course.listings.every(isListingEmpty)) {
+			continue;
+		}
+
+		cluster.courses.push(course);
+	}
+	return cluster;
+}
+
+function parseCurriculum(html, cb) {
+	var clusters = [];
+	// Split page into sections, one for each cluster.
+	var sections = html.split("<legend id='clusterInformation'>");
+	console.log("Got " + sections.length + " clusters.");
+	for (var i = 1; i < sections.length; i++) {
+		clusters[i] = parseCluster(sections[i]);
+	}
+
+	clusters.sort(function (a, b) {
+		return b.id > a.id;
 	});
+
+	cb(clusters);
 }
 
 function extractCoursesFromClusters(cb) {
