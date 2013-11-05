@@ -97,7 +97,6 @@ function radius(node) {
 var allLinks = {};
 function getLink(course, cluster) {
 	var id = nodeId(course) + "|" + cluster.id;
-	//console.log(id in allLinks);
 	return allLinks[id] || (allLinks[id] = {
 		id: id,
 		source: course,
